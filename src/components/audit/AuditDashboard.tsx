@@ -161,10 +161,16 @@ function IssuePin({
       >
         {index + 1}
       </span>
-      {/* Tooltip */}
-      <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-zinc-900 px-2.5 py-1.5 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus:opacity-100">
-        <span className="block font-semibold">{pos.zone}</span>
-        <span className="block text-zinc-400 max-w-[180px] truncate">{issue.title}</span>
+      {/* Tooltip — flips direction based on pin position to stay inside the container */}
+      <span className={[
+        'pointer-events-none absolute z-20 w-max max-w-[190px] rounded-lg bg-zinc-900 px-2.5 py-1.5 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus:opacity-100',
+        // vertical: below pin when near the top, above otherwise
+        pos.y < 18 ? 'top-full mt-2' : 'bottom-full mb-2',
+        // horizontal: right-align when near right edge, left-align when near left edge, centre otherwise
+        pos.x > 68 ? 'right-0' : pos.x < 32 ? 'left-0' : 'left-1/2 -translate-x-1/2',
+      ].join(' ')}>
+        <span className="block font-semibold leading-snug">{pos.zone}</span>
+        <span className="block text-zinc-400 leading-snug break-words">{issue.title}</span>
       </span>
     </button>
   );
@@ -209,34 +215,34 @@ function VisualAuditPanel({
   return (
     <div className="flex flex-col">
       {/* ── Toolbar ── */}
-      <div className="flex items-center gap-1.5 border-b border-zinc-100 bg-zinc-50 px-3 py-2">
+      <div className="flex items-center gap-1.5 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 px-3 py-2">
         {/* Zoom controls */}
-        <span className="text-[10px] font-medium text-zinc-400 mr-1">Zoom</span>
+        <span className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 mr-1">Zoom</span>
         <button
           onClick={() => changeScale(-0.25)}
           disabled={scale <= 0.25}
-          className="flex h-6 w-6 items-center justify-center rounded border border-zinc-200 bg-white text-xs font-bold text-zinc-500 hover:bg-zinc-100 disabled:opacity-30"
+          className="flex h-6 w-6 items-center justify-center rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-bold text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-30"
         >−</button>
-        <span className="w-10 text-center text-[11px] font-mono font-semibold text-zinc-700">
+        <span className="w-10 text-center text-[11px] font-mono font-semibold text-zinc-700 dark:text-zinc-300">
           {Math.round(scale * 100)}%
         </span>
         <button
           onClick={() => changeScale(0.25)}
           disabled={scale >= 3}
-          className="flex h-6 w-6 items-center justify-center rounded border border-zinc-200 bg-white text-xs font-bold text-zinc-500 hover:bg-zinc-100 disabled:opacity-30"
+          className="flex h-6 w-6 items-center justify-center rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-bold text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-30"
         >+</button>
         <button
           onClick={() => setScale(1)}
-          className="ml-1 rounded border border-zinc-200 bg-white px-2 py-0.5 text-[10px] font-medium text-zinc-500 hover:bg-zinc-100"
+          className="ml-1 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700"
         >Fit</button>
 
         <div className="ml-auto flex items-center gap-2">
           {imgState === 'ok' && (
             <>
-              <span className="text-[10px] text-zinc-400 hidden sm:block">↕ Scroll to view full page</span>
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-500 hidden sm:block">↕ Scroll to view full page</span>
               <button
                 onClick={openFullPage}
-                className="flex items-center gap-1 rounded border border-zinc-200 bg-white px-2.5 py-1 text-[10px] font-semibold text-zinc-600 hover:bg-zinc-100 transition-colors"
+                className="flex items-center gap-1 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1 text-[10px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
               >
                 <ExternalLink className="h-3 w-3" />
                 Full page
@@ -249,7 +255,7 @@ function VisualAuditPanel({
       {/* ── Scrollable preview ── */}
       <div
         ref={scrollRef}
-        className="overflow-auto bg-zinc-100"
+        className="overflow-auto bg-zinc-100 dark:bg-zinc-800"
         style={{ maxHeight: '620px', minHeight: '200px' }}
       >
         {/* Loading skeleton */}
@@ -322,16 +328,472 @@ function VisualAuditPanel({
 
       {/* ── Legend ── */}
       {imgState === 'ok' && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-zinc-100 bg-zinc-50 px-4 py-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 px-4 py-2">
           {(['critical', 'high', 'moderate', 'low'] as const).map(s => (
             <div key={s} className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: SEV[s].dot }} />
-              <span className="text-[10px] text-zinc-500">{s === 'moderate' ? 'Medium' : s.charAt(0).toUpperCase() + s.slice(1)}</span>
+              <span className="text-[10px] text-zinc-500 dark:text-zinc-400">{s === 'moderate' ? 'Medium' : s.charAt(0).toUpperCase() + s.slice(1)}</span>
             </div>
           ))}
-          <span className="ml-auto text-[10px] text-zinc-400">{pins.length} issues mapped · Playwright full-page JPEG</span>
+          <span className="ml-auto text-[10px] text-zinc-400 dark:text-zinc-500">{pins.length} issues mapped · Playwright full-page JPEG</span>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── After-mockup generator ────────────────────────────────────────────────────
+
+const ISSUE_BEFORE_AFTER: Record<string, (r: AuditResult) => { before: string; after: string }> = {
+  'a11y-missing-alt': r => ({
+    before: `${r.metadata.imagesWithoutAlt.length} &lt;img&gt; tags have no alt attribute:\n&lt;img src="${r.metadata.imagesWithoutAlt[0] ?? 'banner.jpg'}"&gt;`,
+    after:  `Add descriptive alt text to every non-decorative image:\n&lt;img src="${r.metadata.imagesWithoutAlt[0] ?? 'banner.jpg'}" alt="[What the image shows in context]"&gt;`,
+  }),
+  'a11y-missing-title': () => ({
+    before: 'No &lt;title&gt; tag in &lt;head&gt; — browser tab shows blank or URL',
+    after:  '&lt;title&gt;Page Purpose — Brand Name&lt;/title&gt;\nKeep under 60 characters, lead with the page descriptor.',
+  }),
+  'a11y-input-labels': r => ({
+    before: `${r.metadata.inputsWithoutLabel.length} inputs have no label:\n&lt;input type="email" placeholder="Email"&gt;`,
+    after:  '&lt;label for="email"&gt;Email address&lt;/label&gt;\n&lt;input type="email" id="email"&gt;',
+  }),
+  'a11y-viewport': () => ({
+    before: 'No &lt;meta name="viewport"&gt; — mobile browsers render at desktop width',
+    after:  '&lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;',
+  }),
+  'a11y-lang': () => ({
+    before: '&lt;html&gt; — no lang attribute, screen readers use OS default',
+    after:  '&lt;html lang="en"&gt;',
+  }),
+  'a11y-color-contrast': r => ({
+    before: `${r.browser.colorContrastFailures} element(s) fail WCAG 1.4.3\nExample: light gray text #999 on white = 2.9:1 contrast`,
+    after:  'Darken gray text: #999 → #767676 achieves 4.54:1 (AA pass)\nUse WebAIM Contrast Checker to verify every text/bg pair.',
+  }),
+  'a11y-touch-targets': r => ({
+    before: `${r.browser.touchTargetFailures} buttons/links under 44×44px\nExample: icon buttons rendered at 28×28px`,
+    after:  'Add padding to hit 44px minimum:\n.icon-btn { padding: 10px; min-height: 44px; min-width: 44px; }',
+  }),
+  'usability-meta-desc': r => ({
+    before: 'No &lt;meta name="description"&gt; — Google auto-generates snippet from body text',
+    after:  `&lt;meta name="description" content="[Primary benefit] for [audience]. [Secondary differentiator]. [Soft CTA]."&gt;\nTarget: 130–155 characters.`,
+  }),
+  'usability-og-tags': r => ({
+    before: 'Missing og:title, og:description, og:image — social shares show raw URL',
+    after:  `&lt;meta property="og:title" content="${r.metadata.title || 'Page Title'}"&gt;\n&lt;meta property="og:image" content="https://${r.domain}/og-image.jpg"&gt; (1200×630px)`,
+  }),
+  'usability-title-long': r => ({
+    before: `"${(r.metadata.title ?? '').substring(0, 70)}…"\nAt ${r.metadata.title?.length} chars, Google truncates after ~60`,
+    after:  `Trim to under 60 chars:\n"${(r.metadata.title ?? '').substring(0, 55)}…"\nLead with the unique page descriptor, then brand.`,
+  }),
+  'usability-favicon': () => ({
+    before: 'No &lt;link rel="icon"&gt; — browser shows generic blank-page icon in tabs',
+    after:  '&lt;link rel="icon" href="/favicon.ico"&gt;\n&lt;link rel="icon" type="image/svg+xml" href="/icon.svg"&gt;\n&lt;link rel="apple-touch-icon" href="/apple-icon.png"&gt;',
+  }),
+  'visual-missing-h1': r => ({
+    before: 'Zero &lt;h1&gt; elements on the page — no primary topic signal for SEO or screen readers',
+    after:  `Add one H1 that clearly states the page purpose:\n&lt;h1&gt;${r.metadata.title ? r.metadata.title.split('|')[0].split('–')[0].trim() : 'Your Primary Value Proposition Here'}&lt;/h1&gt;`,
+  }),
+  'visual-multiple-h1': r => ({
+    before: `${r.metadata.h1Tags.length} H1 tags compete for SEO authority:\n${r.metadata.h1Tags.slice(0,2).map(h=>`"${h}"`).join(' and ')}`,
+    after:  `Keep one H1 — your primary page purpose. Demote others to H2:\n&lt;h2&gt;${r.metadata.h1Tags[1] ?? 'Section Heading'}&lt;/h2&gt;`,
+  }),
+  'visual-no-structure': () => ({
+    before: 'All content in generic &lt;div&gt; wrappers — no semantic meaning for crawlers or a11y',
+    after:  '&lt;main&gt; for primary content\n&lt;section&gt; for thematic groups\n&lt;article&gt; for standalone content\n&lt;aside&gt; for supplementary content',
+  }),
+  'cognitive-nav-overload': r => ({
+    before: `Navigation has ${r.metadata.navItems.length} items — exceeds Miller's Law (7±2):\n${r.metadata.navItems.slice(0,6).join(' | ')}…`,
+    after:  `Reduce to 5 top-level items. Group related pages under dropdowns:\n${r.metadata.navItems.slice(0, 4).join(' | ')} | More ▾`,
+  }),
+  'conversion-no-cta': () => ({
+    before: 'No call-to-action button detected — intent-driven visitors have no next step',
+    after:  'Add one prominent above-fold CTA:\n[Action Verb] + [My/Your] + [Value]\ne.g. "Start My Free Trial" or "Get My Free Audit"',
+  }),
+  'conversion-weak-cta': r => ({
+    before: `CTA button labeled "${r.metadata.ctaButtons[0] ?? 'Submit'}" — focuses on effort, not value`,
+    after:  '"Submit" → "Send My Request"\n"Go" → "See My Results"\n"Continue" → "Build My Plan"',
+  }),
+  'conversion-no-social-proof': () => ({
+    before: 'No testimonials, ratings, or client logos — visitors must trust claims without validation',
+    after:  '1. Add 2–3 specific testimonials (name + role + company)\n2. A recognisable client logo strip\n3. An aggregate stat: "4.9/5 on G2" or "2,400+ teams"',
+  }),
+  'trust-no-https': () => ({
+    before: 'Site served over HTTP — browsers display "Not Secure" warning',
+    after:  '1. Get free SSL via Let\'s Encrypt (certbot)\n2. Redirect all HTTP → HTTPS (301)\n3. Add HSTS header: Strict-Transport-Security: max-age=31536000',
+  }),
+  'trust-no-privacy': () => ({
+    before: 'No privacy policy link — required by GDPR, CCPA if any tracking/forms exist',
+    after:  'Add to footer on every page:\n&lt;a href="/privacy"&gt;Privacy Policy&lt;/a&gt;\nGenerate compliant text at iubenda.com or termly.io',
+  }),
+  'trust-no-contact': () => ({
+    before: 'No email, phone, or contact page link — #2 reason users distrust sites',
+    after:  'Add to footer: email address + /contact link\nOptionally: physical city, phone number\nFor high-intent pages: live chat widget',
+  }),
+  'trust-no-copyright': () => ({
+    before: 'No © notice in footer — page looks unfinished or abandoned',
+    after:  '&copy; 2025 Company Name. All rights reserved.\nUse a dynamic year: &copy; ${new Date().getFullYear()} …',
+  }),
+  'usability-slow-lcp': r => ({
+    before: `LCP: ${r.browser.largestContentfulPaintMs}ms — Google rates anything over 2500ms as needing improvement`,
+    after:  '1. Preload hero image: &lt;link rel="preload" as="image" href="hero.jpg"&gt;\n2. Use next/image with priority={true}\n3. Serve images as WebP/AVIF (30-80% smaller)',
+  }),
+  'usability-console-errors': r => ({
+    before: `${r.browser.consoleErrors} JS console error(s) — broken features that users encounter silently`,
+    after:  'Open DevTools → Console and fix each error.\nWrap fetch calls in try/catch. Add null checks before DOM access.',
+  }),
+};
+
+function buildAfterMockup(result: AuditResult): string {
+  const lift     = Math.min(35, result.quickWins.slice(0, 5).reduce((s, i) => s + i.scoreDeduction, 0));
+  const estScore = Math.min(100, result.overallScore + lift);
+  const wins     = result.quickWins.slice(0, 5);
+
+  // Issue lookup — only things actually detected on this page
+  const issueIds = new Set(result.allIssues.map(i => i.id));
+  const has = (id: string) => issueIds.has(id);
+
+  const SEV_COLOR: Record<string, string> = { critical: '#ef4444', high: '#f97316', moderate: '#7c3aed', low: '#94a3b8' };
+  const SEV_BG:    Record<string, string> = { critical: '#fef2f2', high: '#fff7ed', moderate: '#f5f3ff', low: '#f8fafc' };
+
+  const fixBadge = (label: string) =>
+    `<span style="display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#7c3aed;margin-bottom:6px;"><span style="background:#7c3aed;color:white;padding:1px 6px;border-radius:4px;">FIXED</span>${label}</span>`;
+
+  // ── Nav ──────────────────────────────────────────────────────────────────────
+  // Only trim if cognitive-nav-overload was actually detected
+  const rawNav  = result.metadata.navItems;
+  const navItems = has('cognitive-nav-overload') && rawNav.length > 7
+    ? rawNav.slice(0, 5)
+    : rawNav.length > 0
+      ? rawNav
+      : [];
+  const navFixed = has('cognitive-nav-overload') && rawNav.length > 7;
+
+  // ── H1 ───────────────────────────────────────────────────────────────────────
+  const missingH1   = has('visual-missing-h1');
+  const multipleH1s = has('visual-multiple-h1');
+  const currentH1   = result.metadata.h1Tags[0] ?? '';
+  const proposedH1  = missingH1
+    ? (result.metadata.title ? result.metadata.title.split(/[|–\-]/)[0].trim() : result.domain)
+    : multipleH1s
+      ? currentH1   // keep the first one — just remove extras
+      : currentH1;  // no change needed
+
+  // ── Description ──────────────────────────────────────────────────────────────
+  const missingDesc = has('usability-meta-desc');
+  const desc = result.metadata.metaDescription
+    || (missingDesc ? `Discover how ${result.domain} helps you achieve your goals faster. Get started today — no credit card required.` : '');
+
+  // ── CTA ──────────────────────────────────────────────────────────────────────
+  const missingCta  = has('conversion-no-cta');
+  const weakCta     = has('conversion-weak-cta');
+  const existingCta = result.metadata.ctaButtons[0] ?? '';
+  const ctaLabel    = missingCta ? 'Start Free Trial'
+    : weakCta        ? 'Get Started Now'
+    : existingCta;
+  const showCta     = missingCta || weakCta || !!ctaLabel;
+
+  // ── Social proof ─────────────────────────────────────────────────────────────
+  const missingSocialProof = has('conversion-no-social-proof');
+
+  // ── Footer ───────────────────────────────────────────────────────────────────
+  const missingPrivacy   = has('trust-no-privacy');
+  const missingCopyright = has('trust-no-copyright');
+  const missingContact   = has('trust-no-contact');
+  const showFooterFix    = missingPrivacy || missingCopyright || missingContact;
+
+  // ── Fix cards ────────────────────────────────────────────────────────────────
+  const fixCards = wins.map((win, i) => {
+    const ba = ISSUE_BEFORE_AFTER[win.id]?.(result);
+    if (!ba) return '';
+    const color = SEV_COLOR[win.severity] ?? '#94a3b8';
+    const bg    = SEV_BG[win.severity]   ?? '#f8fafc';
+    return `
+      <div style="background:white;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:12px;">
+        <div style="background:${bg};border-bottom:1px solid #e5e7eb;padding:10px 14px;display:flex;align-items:center;gap:8px;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${color};color:white;font-size:10px;font-weight:800;flex-shrink:0;">${i + 1}</span>
+          <span style="font-size:11px;font-weight:700;color:#111827;flex:1;">${win.title}</span>
+          <span style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:${color};padding:2px 8px;border-radius:999px;background:white;border:1px solid ${color};">${win.severity === 'moderate' ? 'MEDIUM' : win.severity.toUpperCase()}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+          <div style="padding:12px 14px;border-right:1px solid #f3f4f6;">
+            <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#ef4444;margin-bottom:6px;">✗ Before</div>
+            <pre style="font-family:ui-monospace,monospace;font-size:10px;line-height:1.5;color:#6b7280;margin:0;white-space:pre-wrap;word-break:break-word;">${ba.before}</pre>
+          </div>
+          <div style="padding:12px 14px;">
+            <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#16a34a;margin-bottom:6px;">✓ After</div>
+            <pre style="font-family:ui-monospace,monospace;font-size:10px;line-height:1.5;color:#166534;margin:0;white-space:pre-wrap;word-break:break-word;">${ba.after}</pre>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Redesign — ${result.domain}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f0f5;color:#111;font-size:13px}
+  code,pre{font-family:ui-monospace,'Cascadia Code',monospace}
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#4c1d95 100%);padding:20px 20px 16px;text-align:center;">
+  <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(139,92,246,.25);border:1px solid rgba(139,92,246,.4);border-radius:999px;padding:4px 12px;margin-bottom:10px;">
+    <span style="font-size:11px;">⚡</span>
+    <span style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#c4b5fd;">AI Redesign Concept</span>
+  </div>
+  <div style="font-size:17px;font-weight:900;color:white;margin-bottom:3px;">${result.domain}</div>
+  <div style="font-size:11px;color:rgba(255,255,255,.5);">Applying ${wins.length} fix${wins.length !== 1 ? 'es' : ''} · Est. score: <strong style="color:#a78bfa">${estScore}/100</strong> <span style="color:#86efac">(+${lift} pts)</span></div>
+</div>
+
+<!-- ── Simulated page — only modified elements are shown ── -->
+<div style="background:white;border-bottom:3px solid #7c3aed;">
+
+  <!-- Nav: only rendered if nav issue was detected -->
+  ${navItems.length > 0 ? `
+  <div style="padding:12px 20px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #f3f4f6;">
+    <div style="font-size:13px;font-weight:900;color:#1a1a2e;">${result.domain.split('.')[0]}</div>
+    ${navFixed ? `<div style="font-size:9px;margin-left:8px;">${fixBadge(`Reduced from ${rawNav.length} → 5 items`)}</div>` : ''}
+    <div style="display:flex;gap:14px;margin-left:auto;">
+      ${navItems.slice(0, 6).map(n =>
+        `<span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;">${n}</span>`
+      ).join('')}
+    </div>
+  </div>` : ''}
+
+  <!-- Hero: only elements with detected issues are modified -->
+  <div style="padding:32px 20px 28px;text-align:center;background:linear-gradient(to bottom,#fafafa,white);">
+
+    ${missingH1 || multipleH1s ? `<div style="margin-bottom:8px;">${fixBadge(missingH1 ? 'Added missing H1' : 'Removed duplicate H1s — kept one')}</div>` : ''}
+    ${proposedH1 ? `<h1 style="font-size:22px;font-weight:900;color:#111827;line-height:1.2;max-width:480px;margin:0 auto 10px;">${proposedH1}</h1>` : ''}
+
+    ${missingDesc ? `<div style="margin-bottom:6px;">${fixBadge('Added meta description')}</div>` : ''}
+    ${desc ? `<p style="font-size:12px;color:#6b7280;max-width:400px;margin:0 auto 20px;line-height:1.6;">${desc.substring(0, 140)}</p>` : '<div style="height:20px;"></div>'}
+
+    ${(missingCta || weakCta) ? `<div style="margin-bottom:8px;">${fixBadge(missingCta ? 'Added primary CTA above fold' : 'Rewrote CTA copy for value')}</div>` : ''}
+    ${showCta ? `<button style="background:#7c3aed;color:white;font-size:12px;font-weight:700;padding:11px 28px;border-radius:999px;border:none;cursor:pointer;">${ctaLabel}</button>` : ''}
+
+    ${missingSocialProof ? `
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f3f4f6;">
+      <div style="margin-bottom:10px;">${fixBadge('Added social proof section')}</div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        ${['★★★★★ "Changed how we work" — Sarah K., Product Lead', '★★★★★ "Results in minutes" — Mark T., CTO'].map(t =>
+          `<div style="background:#f8f8ff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;font-size:10px;color:#374151;max-width:200px;text-align:left;">${t}</div>`
+        ).join('')}
+      </div>
+    </div>` : ''}
+  </div>
+
+  <!-- Footer: only shown if footer trust issues were detected -->
+  ${showFooterFix ? `
+  <div style="background:#f9fafb;border-top:1px solid #f3f4f6;padding:12px 20px;display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
+    <div style="margin-bottom:4px;width:100%;">${fixBadge('Added missing footer elements')}</div>
+    ${missingCopyright ? `<span style="font-size:10px;color:#9ca3af;">© 2025 ${result.domain.split('.')[0]}. All rights reserved.</span>` : ''}
+    <div style="display:flex;gap:12px;margin-left:auto;">
+      ${missingPrivacy ? `<span style="font-size:10px;color:#7c3aed;text-decoration:underline;">Privacy Policy</span>` : ''}
+      ${missingContact ? `<span style="font-size:10px;color:#7c3aed;text-decoration:underline;">Contact Us</span>` : ''}
+    </div>
+  </div>` : ''}
+</div>
+
+<!-- ── Fix cards ── -->
+<div style="padding:16px 16px 24px;">
+  <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#6b7280;margin-bottom:12px;padding:0 2px;">Specific fixes (${wins.length})</div>
+  ${fixCards}
+</div>
+
+</body>
+</html>`;
+}
+
+// ── Improvement Concept ───────────────────────────────────────────────────────
+
+type PreviewTab = 'before' | 'after' | 'annotated';
+
+function ImprovementConcept({ result }: { result: AuditResult }) {
+  const [tab, setTab] = useState<PreviewTab>('before');
+
+  const lift      = Math.min(35, result.quickWins.slice(0, 5).reduce((s, i) => s + i.scoreDeduction, 0));
+  const estScore  = Math.min(100, result.overallScore + lift);
+  const suggestions = result.quickWins.slice(0, 4);
+
+  // Annotated: top issues that have known viewport positions
+  const annotatedPins = result.allIssues
+    .filter(i => ISSUE_COORDS[i.id])
+    .sort((a, b) => ({ critical: 0, high: 1, moderate: 2, low: 3 }[a.severity] - { critical: 0, high: 1, moderate: 2, low: 3 }[b.severity]))
+    .slice(0, 8);
+
+  return (
+    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
+      {/* Header */}
+      <div className="border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-4">
+        <p className="text-xs font-semibold uppercase tracking-widest text-zinc-700 dark:text-zinc-300">Improvement Concept</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2" style={{ maxHeight: 840 }}>
+        {/* ── Left: AI suggestion cards ── */}
+        <div className="flex flex-col bg-zinc-900 p-6 overflow-y-auto" style={{ maxHeight: 840 }}>
+          {/* Badge */}
+          <div className="mb-5 inline-flex w-fit items-center gap-1.5 rounded-full bg-violet-600/25 px-3 py-1.5">
+            <Zap className="h-3 w-3 text-violet-400" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400">AI Redesign Suggestions</span>
+          </div>
+
+          {/* Suggestion cards */}
+          <div className="flex-1 space-y-3">
+            {suggestions.length > 0 ? suggestions.map((win, i) => (
+              <div key={win.id} className="rounded-xl border border-white/8 bg-white/6 p-4 backdrop-blur-sm">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white">
+                    {i + 1}
+                  </span>
+                  <div>
+                    <p className="text-xs font-semibold text-white leading-snug">{win.title}</p>
+                    <p className="mt-1.5 text-[11px] leading-relaxed text-zinc-400 line-clamp-2">
+                      {win.specificFix}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )) : (
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
+                <p className="text-xs text-zinc-400">No quick wins detected — page is already well optimised.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Stats bar */}
+          <div className="mt-6 flex items-center gap-0 divide-x divide-zinc-700 rounded-xl border border-white/8 bg-white/5 overflow-hidden">
+            {[
+              { label: 'Est. Score',   value: `${estScore}%`,  color: 'text-white' },
+              { label: 'Points now',   value: `+${lift}`,       color: 'text-violet-400' },
+              { label: 'Points Lift',  value: `+${lift}`,       color: 'text-violet-400' },
+            ].map(s => (
+              <div key={s.label} className="flex-1 py-3 text-center">
+                <p className={`text-lg font-black leading-none ${s.color}`}>{s.value}</p>
+                <p className="mt-1 text-[9px] font-semibold uppercase tracking-wide text-zinc-500">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Right: Before / After / Annotated tabs ── */}
+        <div className="flex flex-col bg-zinc-800 overflow-hidden" style={{ maxHeight: 840 }}>
+          {/* Tab bar */}
+          <div className="flex shrink-0 items-center gap-1 border-b border-white/10 px-4 py-3">
+            {(['before', 'after', 'annotated'] as PreviewTab[]).map(t => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold capitalize transition-all ${
+                  tab === t
+                    ? 'bg-white text-zinc-900 shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab content — flex column so annotated legend can be pinned at bottom */}
+          <div className="flex flex-1 flex-col overflow-hidden">
+            {/* BEFORE — real screenshot */}
+            {tab === 'before' && (
+              <div className="flex-1 overflow-y-auto">
+                {result.screenshotUrl ? (
+                  <img
+                    src={result.screenshotUrl}
+                    alt="Current page screenshot"
+                    className="w-full h-auto block"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <p className="text-xs text-zinc-500">Screenshot unavailable</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* AFTER — AI-generated redesign mockup */}
+            {tab === 'after' && (
+              <iframe
+                srcDoc={buildAfterMockup(result)}
+                title="AI Redesign Preview"
+                className="flex-1 w-full border-0"
+                style={{ minHeight: 700 }}
+                sandbox="allow-same-origin"
+              />
+            )}
+
+            {/* ANNOTATED — scrollable screenshot + legend always visible at bottom */}
+            {tab === 'annotated' && (
+              <>
+                {/* Scrollable image area */}
+                <div className="flex-1 overflow-y-auto relative">
+                  {result.screenshotUrl ? (
+                    <div className="relative">
+                      <img
+                        src={result.screenshotUrl}
+                        alt="Annotated screenshot"
+                        className="w-full h-auto block opacity-75"
+                      />
+                      {annotatedPins.map((issue, i) => {
+                        const pos = ISSUE_COORDS[issue.id]!;
+                        const sev = SEV[issue.severity];
+                        return (
+                          <div
+                            key={issue.id}
+                            className="absolute flex items-center gap-1.5 group"
+                            style={{ left: `${pos.x}%`, top: `${pos.y}%`, transform: 'translate(-50%,-50%)' }}
+                          >
+                            <span
+                              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full ring-2 ring-white text-[9px] font-bold text-white shadow-lg"
+                              style={{ backgroundColor: sev.dot }}
+                            >
+                              {i + 1}
+                            </span>
+                            <span
+                              className="hidden group-hover:flex rounded-md px-2 py-0.5 text-[9px] font-semibold text-white shadow whitespace-nowrap"
+                              style={{ backgroundColor: sev.dot }}
+                            >
+                              {issue.title.substring(0, 40)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex h-64 items-center justify-center">
+                      <p className="text-xs text-zinc-500">Screenshot unavailable</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Legend — pinned at bottom, always visible, never scrolls */}
+                <div className="shrink-0 flex flex-wrap gap-x-3 gap-y-2 border-t border-white/10 bg-zinc-900 px-4 py-3">
+                  {annotatedPins.map((issue, i) => (
+                    <div key={issue.id} className="flex items-center gap-1.5">
+                      <span
+                        className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white"
+                        style={{ backgroundColor: SEV[issue.severity].dot }}
+                      >
+                        {i + 1}
+                      </span>
+                      <span className="text-[9px] text-zinc-400 max-w-[130px] truncate">{issue.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -426,27 +888,27 @@ export function AuditDashboard({ result, onReanalyze }: AuditDashboardProps) {
   const vsAvg = result.overallScore - 74;
 
   return (
-    <div className="min-h-screen bg-[#f7f8fa]">
+    <div className="min-h-screen bg-[#f7f8fa] dark:bg-zinc-950">
       {/* ── App header ── */}
-      <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white px-6 py-3">
+      <header className="sticky top-0 z-40 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-3">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-md bg-violet-600 text-[11px] font-bold text-white">U</div>
-            <span className="text-sm font-semibold text-zinc-900">UX Auditor AI</span>
+            <span className="text-sm font-semibold text-zinc-900 dark:text-white">UX Auditor AI</span>
           </Link>
           <div className="flex items-center gap-2 no-print">
-            <span className="hidden rounded-full border border-zinc-200 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-400 sm:block">Dashboard Beta v1.2</span>
-            <button onClick={() => setExpertMode(v => !v)} className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${expertMode ? 'border-violet-200 bg-violet-50 text-violet-700' : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'}`}>
+            <span className="hidden rounded-full border border-zinc-200 dark:border-zinc-700 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 sm:block">Dashboard Beta v1.2</span>
+            <button onClick={() => setExpertMode(v => !v)} className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${expertMode ? 'border-violet-200 bg-violet-50 text-violet-700' : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700'}`}>
               {expertMode ? <ToggleRight className="h-3.5 w-3.5" /> : <ToggleLeft className="h-3.5 w-3.5" />}
               {expertMode ? 'Expert Mode' : 'Standard Mode'}
             </button>
-            <button onClick={handleDownload} className="flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition-colors">
+            <button onClick={handleDownload} className="flex items-center gap-1.5 rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/50 px-3 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-950 transition-colors">
               <Download className="h-3.5 w-3.5" /> PDF Export
             </button>
             <button onClick={onReanalyze} className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 transition-colors">
               <RefreshCw className="h-3.5 w-3.5" /> Re-analyze
             </button>
-            <Link href="/" className="rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-zinc-700 transition-colors">+ New Audit</Link>
+            <Link href="/" className="rounded-full bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-zinc-700 dark:hover:bg-zinc-200 transition-colors">+ New Audit</Link>
           </div>
         </div>
       </header>
@@ -455,13 +917,13 @@ export function AuditDashboard({ result, onReanalyze }: AuditDashboardProps) {
         {/* ── Page title ── */}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
               <a href={result.url} target="_blank" rel="noopener noreferrer" className="hover:text-violet-600 transition-colors">
                 {result.domain.toUpperCase()}
               </a>
-              <span className="mx-2 text-zinc-300">/</span>UX AUDIT REPORT
+              <span className="mx-2 text-zinc-300 dark:text-zinc-600">/</span>UX AUDIT REPORT
             </p>
-            <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-zinc-900">Executive Dashboard</h1>
+            <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">Executive Dashboard</h1>
           </div>
           <a href={result.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-600 transition-colors mt-2">
             <ExternalLink className="h-3.5 w-3.5" /> Visit site
@@ -470,13 +932,13 @@ export function AuditDashboard({ result, onReanalyze }: AuditDashboardProps) {
 
         {/* ── KPI cards ── */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Overall UX Score</p>
+          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Overall UX Score</p>
             <div className="mt-3 flex items-end gap-2">
               <span className="text-5xl font-black leading-none" style={{ color: scoreColor(result.overallScore) }}>{result.overallScore}</span>
               <span className="mb-1 text-sm font-medium text-zinc-400">/ 100</span>
             </div>
-            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
+            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
               <div className="h-full rounded-full transition-all duration-700" style={{ width: `${result.overallScore}%`, backgroundColor: scoreColor(result.overallScore) }} />
             </div>
             <p className={`mt-2 text-[11px] font-semibold ${vsAvg >= 0 ? 'text-green-600' : 'text-red-500'}`}>
@@ -485,35 +947,35 @@ export function AuditDashboard({ result, onReanalyze }: AuditDashboardProps) {
           </div>
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Critical Issues</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Critical Issues</p>
             <div className="mt-3 flex items-end gap-2">
               <span className={`text-5xl font-black leading-none ${critCount > 0 ? 'text-red-500' : 'text-green-500'}`}>{critCount}</span>
             </div>
-            <p className="mt-4 text-[11px] text-zinc-400">{critCount > 0 ? 'Requires immediate attention' : 'No critical issues'}</p>
+            <p className="mt-4 text-[11px] text-zinc-400 dark:text-zinc-500">{critCount > 0 ? 'Requires immediate attention' : 'No critical issues'}</p>
           </div>
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Quick Wins</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Quick Wins</p>
             <div className="mt-3">
-              <span className="text-5xl font-black leading-none text-violet-600">{result.quickWins.length}</span>
+              <span className="text-5xl font-black leading-none text-violet-600 dark:text-violet-400">{result.quickWins.length}</span>
             </div>
             <div className="mt-4 flex items-center gap-1">
-              <Zap className="h-3 w-3 text-violet-500" />
-              <p className="text-[11px] text-zinc-400">High impact / Low effort</p>
+              <Zap className="h-3 w-3 text-violet-500 dark:text-violet-400" />
+              <p className="text-[11px] text-zinc-400 dark:text-zinc-500">High impact / Low effort</p>
             </div>
           </div>
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Industry Benchmark</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Industry Benchmark</p>
             <div className="mt-4 space-y-2.5">
               {[{ label: 'SaaS Avg', value: 74, color: '#94a3b8' },
                 { label: 'Your Site', value: result.overallScore, color: scoreColor(result.overallScore) }].map(b => (
                 <div key={b.label}>
                   <div className="mb-1 flex justify-between text-[11px]">
-                    <span className="text-zinc-500">{b.label}</span>
+                    <span className="text-zinc-500 dark:text-zinc-400">{b.label}</span>
                     <span className="font-semibold" style={{ color: b.color }}>{b.value}%</span>
                   </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
                     <div className="h-full rounded-full transition-all duration-700" style={{ width: `${b.value}%`, backgroundColor: b.color }} />
                   </div>
                 </div>
@@ -524,13 +986,13 @@ export function AuditDashboard({ result, onReanalyze }: AuditDashboardProps) {
 
         {/* ── Browser Performance Metrics ── */}
         {result.browser && (
-          <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
-            <div className="flex items-center gap-2 border-b border-zinc-100 px-6 py-3.5">
-              <Gauge className="h-4 w-4 text-violet-500" />
-              <p className="text-xs font-semibold uppercase tracking-widest text-zinc-700">Browser Performance — Captured by Playwright</p>
-              <span className="ml-auto rounded-full bg-violet-50 px-2.5 py-0.5 text-[10px] font-semibold text-violet-600">Real Browser Data</span>
+          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 px-6 py-3.5">
+              <Gauge className="h-4 w-4 text-violet-500 dark:text-violet-400" />
+              <p className="text-xs font-semibold uppercase tracking-widest text-zinc-700 dark:text-zinc-300">Browser Performance — Captured by Playwright</p>
+              <span className="ml-auto rounded-full bg-violet-50 dark:bg-violet-950/50 px-2.5 py-0.5 text-[10px] font-semibold text-violet-600 dark:text-violet-400">Real Browser Data</span>
             </div>
-            <div className="grid grid-cols-2 gap-0 divide-x divide-y divide-zinc-100 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-0 divide-x divide-y divide-zinc-100 dark:divide-zinc-800 sm:grid-cols-3 lg:grid-cols-6">
               {[
                 {
                   icon: Timer, label: 'LCP', unit: 'ms',
@@ -569,10 +1031,10 @@ export function AuditDashboard({ result, onReanalyze }: AuditDashboardProps) {
                   tip: 'Failed network requests',
                 },
               ].map(m => (
-                <div key={m.label} className="flex flex-col items-center justify-center p-4 text-center hover:bg-zinc-50 transition-colors" title={m.tip}>
-                  <m.icon className="h-4 w-4 text-zinc-300 mb-1.5" />
+                <div key={m.label} className="flex flex-col items-center justify-center p-4 text-center hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors" title={m.tip}>
+                  <m.icon className="h-4 w-4 text-zinc-300 dark:text-zinc-600 mb-1.5" />
                   <span className="text-2xl font-black" style={{ color: m.color }}>{m.value}{m.unit}</span>
-                  <span className="text-[10px] font-semibold text-zinc-400 mt-0.5 uppercase tracking-wide">{m.label}</span>
+                  <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 mt-0.5 uppercase tracking-wide">{m.label}</span>
                 </div>
               ))}
             </div>
@@ -580,13 +1042,13 @@ export function AuditDashboard({ result, onReanalyze }: AuditDashboardProps) {
         )}
 
         {/* ── Visual UI Audit + Detailed Insights ── */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 items-start">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 items-stretch">
           {/* Screenshot with heatmap — full-page scrollable */}
-          <div className="lg:col-span-3 rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3.5 shrink-0">
+          <div className="lg:col-span-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 px-5 py-3.5 shrink-0">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-zinc-700">Visual UI Audit</p>
-                <p className="text-[10px] text-zinc-400 mt-0.5">Full page · scroll to explore · click markers for details</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-zinc-700 dark:text-zinc-300">Visual UI Audit</p>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">Full page · scroll to explore · click markers for details</p>
               </div>
               <div className="flex items-center gap-2">
                 {critCount > 0 && <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-[10px] font-semibold text-red-600">{critCount} critical</span>}
@@ -597,12 +1059,12 @@ export function AuditDashboard({ result, onReanalyze }: AuditDashboardProps) {
           </div>
 
           {/* Detailed Insights */}
-          <div className="lg:col-span-2 rounded-2xl border border-zinc-200 bg-white shadow-sm flex flex-col">
-            <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3.5 shrink-0">
-              <p className="text-xs font-semibold uppercase tracking-widest text-zinc-700">Detailed Insights</p>
-              <Filter className="h-3.5 w-3.5 text-zinc-300" />
+          <div className="lg:col-span-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm flex flex-col h-full">
+            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 px-5 py-3.5 shrink-0">
+              <p className="text-xs font-semibold uppercase tracking-widest text-zinc-700 dark:text-zinc-300">Detailed Insights</p>
+              <Filter className="h-3.5 w-3.5 text-zinc-300 dark:text-zinc-600" />
             </div>
-            <div className="divide-y divide-zinc-50">
+            <div className="divide-y divide-zinc-50 dark:divide-zinc-800 overflow-y-auto flex-1">
               {topInsights.map((issue, i) => {
                 const sc = SEV[issue.severity];
                 const isActive = activePin === issue.id;
@@ -616,7 +1078,7 @@ export function AuditDashboard({ result, onReanalyze }: AuditDashboardProps) {
                 return (
                   <div
                     key={issue.id}
-                    className={`px-5 py-4 transition-colors cursor-pointer hover:bg-zinc-50 ${isActive ? 'bg-violet-50 hover:bg-violet-50' : ''}`}
+                    className={`px-5 py-4 transition-colors cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 ${isActive ? 'bg-violet-50 dark:bg-violet-950/30 hover:bg-violet-50 dark:hover:bg-violet-950/30' : ''}`}
                     onClick={() => setActivePin(isActive ? null : issue.id)}
                   >
                     {/* Header row */}
@@ -638,17 +1100,17 @@ export function AuditDashboard({ result, onReanalyze }: AuditDashboardProps) {
                     </div>
 
                     {/* Title */}
-                    <p className="mt-2 text-[11px] font-semibold text-zinc-800 leading-snug">{issue.title}</p>
+                    <p className="mt-2 text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 leading-snug">{issue.title}</p>
 
                     {/* Expanded evidence — full text, no clamp */}
                     {isActive && (
                       <div className="mt-3 space-y-2" onClick={e => e.stopPropagation()}>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Evidence</p>
-                        <p className="text-[11px] leading-relaxed text-zinc-600 font-mono bg-zinc-50 rounded-lg p-3 border border-zinc-100 whitespace-pre-wrap break-words">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">Evidence</p>
+                        <p className="text-[11px] leading-relaxed text-zinc-600 dark:text-zinc-400 font-mono bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3 border border-zinc-100 dark:border-zinc-700 whitespace-pre-wrap break-words">
                           {issue.evidence}
                         </p>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 mt-2">Fix</p>
-                        <p className="text-[11px] leading-relaxed text-zinc-600 break-words">{issue.specificFix}</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500 mt-2">Fix</p>
+                        <p className="text-[11px] leading-relaxed text-zinc-600 dark:text-zinc-400 break-words">{issue.specificFix}</p>
                       </div>
                     )}
 
@@ -665,11 +1127,11 @@ export function AuditDashboard({ result, onReanalyze }: AuditDashboardProps) {
         </div>
 
         {/* ── Category Performance ── */}
-        <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
-          <div className="border-b border-zinc-100 px-6 py-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-700">Category Performance</p>
+        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+          <div className="border-b border-zinc-100 dark:border-zinc-800 px-6 py-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-700 dark:text-zinc-300">Category Performance</p>
           </div>
-          <div className="grid grid-cols-2 divide-x divide-y divide-zinc-100 sm:grid-cols-3">
+          <div className="grid grid-cols-2 divide-x divide-y divide-zinc-100 dark:divide-zinc-800 sm:grid-cols-3">
             {result.categories.map(cat => {
               const Icon = CAT_ICONS[cat.id] ?? ShieldCheck;
               const color = scoreColor(cat.score);
@@ -678,16 +1140,16 @@ export function AuditDashboard({ result, onReanalyze }: AuditDashboardProps) {
               const highInCat = cat.issues.filter(i => i.severity === 'high').length;
               return (
                 <div key={cat.id}
-                  className="flex items-center justify-between p-5 hover:bg-zinc-50 transition-colors cursor-pointer"
+                  className="flex items-center justify-between p-5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
                   onClick={() => { setCatFilter(cat.id); document.getElementById('issues-section')?.scrollIntoView({ behavior: 'smooth' }); }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50">
-                      <Icon className="h-4 w-4 text-violet-600" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950/50">
+                      <Icon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-zinc-800">{cat.label}</p>
-                      <p className="text-[10px] text-zinc-400">{cat.score}% Optimized</p>
+                      <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">{cat.label}</p>
+                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500">{cat.score}% Optimized</p>
                       <div className="mt-0.5 flex items-center gap-1.5">
                         {critInCat > 0 && <span className="text-[9px] font-semibold text-red-500">{critInCat} crit</span>}
                         {highInCat > 0 && <span className="text-[9px] font-semibold text-orange-500">{highInCat} high</span>}
@@ -705,63 +1167,25 @@ export function AuditDashboard({ result, onReanalyze }: AuditDashboardProps) {
         </div>
 
         {/* ── Improvement Concept ── */}
-        <div className="rounded-2xl border border-zinc-200 overflow-hidden shadow-sm">
-          <div className="border-b border-zinc-100 bg-white px-6 py-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-700">Improvement Concept (Before vs After)</p>
-          </div>
-          <div className="grid grid-cols-1 gap-0 md:grid-cols-2">
-            <div className="bg-zinc-900 p-8">
-              <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-violet-600/20 px-3 py-1">
-                <Zap className="h-3 w-3 text-violet-400" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400">AI Redesign Suggestion</span>
-              </div>
-              <h3 className="text-xl font-bold text-white leading-snug">{improvement.title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-zinc-400">{improvement.description}</p>
-              <div className="mt-6 flex items-center gap-6">
-                <div>
-                  <p className="text-2xl font-black text-white">{improvement.estScore}%</p>
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Est. Score</p>
-                </div>
-                <div className="h-10 w-px bg-zinc-700" />
-                <div>
-                  <p className="text-2xl font-black text-violet-400">+{improvement.lift}</p>
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Points Lift</p>
-                </div>
-              </div>
-            </div>
-            <div className="relative flex min-h-48 items-center justify-center overflow-hidden bg-zinc-800">
-              {result.metadata.ogImage ? (
-                <img src={result.metadata.ogImage} alt="Proposed mockup" className="h-full w-full object-cover opacity-35" />
-              ) : (
-                <div className="h-full w-full bg-gradient-to-br from-zinc-700 to-zinc-900 opacity-60" />
-              )}
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                <div className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 backdrop-blur-sm">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-white">Proposed Mockup</p>
-                </div>
-                <p className="text-xs text-white/40">Based on {result.quickWins.length} quick win improvements</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ImprovementConcept result={result} />
 
         {/* ── Full issue list ── */}
-        <div id="issues-section" className="rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
-          <div className="border-b border-zinc-100 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-700">
+        <div id="issues-section" className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+          <div className="border-b border-zinc-100 dark:border-zinc-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-700 dark:text-zinc-300">
               All Issues ({result.allIssues.length})
             </p>
             <div className="flex flex-wrap gap-1.5">
               {(['all', ...result.categories.map(c => c.id)] as (CategoryId | 'all')[]).map(cat => (
                 <button key={cat} onClick={() => setCatFilter(cat)}
-                  className={`rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition-colors ${catFilter === cat ? 'border-violet-300 bg-violet-600 text-white' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300'}`}>
+                  className={`rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition-colors ${catFilter === cat ? 'border-violet-300 bg-violet-600 text-white' : 'border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'}`}>
                   {cat === 'all' ? 'All' : result.categories.find(c => c.id === cat)?.label?.split(' ')[0] ?? cat}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="border-b border-zinc-100 px-4 pt-3">
+          <div className="border-b border-zinc-100 dark:border-zinc-800 px-4 pt-3">
             <div className="flex gap-1 overflow-x-auto">
               {([
                 { key: 'all',        label: `All (${result.allIssues.length})` },
@@ -772,7 +1196,7 @@ export function AuditDashboard({ result, onReanalyze }: AuditDashboardProps) {
                 { key: 'quick-wins', label: `Quick Wins (${result.quickWins.length})`, icon: Zap, color: 'text-violet-600' },
               ] as { key: typeof issueTab; label: string; icon?: React.ElementType; color?: string }[]).map(t => (
                 <button key={t.key} onClick={() => setIssueTab(t.key)}
-                  className={`shrink-0 flex items-center gap-1.5 rounded-t-lg px-4 py-2 text-xs font-medium transition-all border-b-2 ${issueTab === t.key ? 'border-violet-600 text-violet-700' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}>
+                  className={`shrink-0 flex items-center gap-1.5 rounded-t-lg px-4 py-2 text-xs font-medium transition-all border-b-2 ${issueTab === t.key ? 'border-violet-600 text-violet-700 dark:text-violet-400' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'}`}>
                   {t.icon && <t.icon className={`h-3 w-3 ${t.color}`} />}
                   {t.label}
                 </button>
@@ -797,7 +1221,7 @@ export function AuditDashboard({ result, onReanalyze }: AuditDashboardProps) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between py-4 text-[11px] text-zinc-400">
+        <div className="flex items-center justify-between py-4 text-[11px] text-zinc-400 dark:text-zinc-500">
           <p>UX Auditor AI · {new Date(result.analyzedAt).toLocaleString()}</p>
           <p>{result.allIssues.length} issues · {result.quickWins.length} quick wins</p>
         </div>

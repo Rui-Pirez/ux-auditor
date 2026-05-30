@@ -60,37 +60,40 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-50">
+    <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-950">
       <Navbar />
 
+      {/* Hero + Brands = 95vh */}
+      <div className="flex flex-col min-h-[95vh]">
+
       {/* Hero */}
-      <section className="flex flex-1 flex-col items-center px-6 pt-20 pb-16 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-xs font-medium text-zinc-500 shadow-sm">
+      <section className="flex flex-1 flex-col items-center justify-center px-6 pt-20 pb-8 text-center">
+        <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 shadow-sm">
           <span className="text-amber-500">✦</span>
           AI-POWERED SAAS PLATFORM
         </div>
 
-        <h1 className="mt-8 max-w-2xl text-5xl font-extrabold tracking-tight text-zinc-900 leading-[1.1] sm:text-6xl">
+        <h1 className="mt-8 w-full max-w-3xl text-5xl font-extrabold tracking-tight text-zinc-900 dark:text-white leading-[1.1] sm:text-6xl">
           Stop guessing.<br />
-          Start <span className="text-violet-600">perfecting</span> your UX.
+          Start <span className="text-violet-600 dark:text-violet-400">perfecting</span> your UX.
         </h1>
 
-        <p className="mt-6 max-w-xl text-base leading-relaxed text-zinc-500">
+        <p className="mt-6 max-w-xl text-base leading-relaxed text-zinc-500 dark:text-zinc-400">
           The all-in-one UX engine for product teams. Audit any URL, track accessibility history,
           and unlock data-backed conversion wins in minutes.
         </p>
 
         {/* URL input */}
         <div className="mt-10 w-full max-w-2xl">
-          <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-5 py-3 shadow-md shadow-zinc-100 focus-within:ring-2 focus-within:ring-violet-500/30 focus-within:border-violet-300 transition-all">
-            <Search className="h-4 w-4 shrink-0 text-zinc-400" />
+          <div className="flex items-center gap-2 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-5 py-3 shadow-md shadow-zinc-100 dark:shadow-zinc-950 focus-within:ring-2 focus-within:ring-violet-500/30 focus-within:border-violet-300 dark:focus-within:border-violet-600 transition-all">
+            <Search className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500" />
             <input
               type="url"
               value={url}
               onChange={e => setUrl(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Enter website URL (e.g., app.yourproduct.com)"
-              className="flex-1 bg-transparent text-sm text-zinc-800 placeholder-zinc-400 outline-none"
+              className="flex-1 bg-transparent text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-600 outline-none"
               autoFocus
             />
             <button
@@ -102,16 +105,16 @@ export default function LandingPage() {
             </button>
           </div>
 
-          <div className="mt-4 flex items-center justify-center gap-6 text-xs font-medium uppercase tracking-widest text-zinc-400">
-            <label className="flex cursor-pointer items-center gap-1.5 hover:text-zinc-600 transition-colors">
+          <div className="mt-4 flex items-center justify-center gap-6 text-xs font-medium uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+            <label className="flex cursor-pointer items-center gap-1.5 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">
               <Upload className="h-3 w-3" />
               Upload Screenshot
               <input type="file" accept="image/*" className="hidden" />
             </label>
-            <span className="text-zinc-200">|</span>
+            <span className="text-zinc-200 dark:text-zinc-700">|</span>
             <button
               onClick={() => router.push('/history')}
-              className="flex items-center gap-1.5 hover:text-zinc-600 transition-colors"
+              className="flex items-center gap-1.5 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
             >
               <Activity className="h-3 w-3" />
               Audit History ({auditCount})
@@ -121,14 +124,14 @@ export default function LandingPage() {
       </section>
 
       {/* Brand logos */}
-      <section className="border-y border-zinc-200 bg-white py-8">
+      <section className="border-y border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-8">
         <div className="mx-auto max-w-4xl px-6">
-          <p className="mb-6 text-center text-[10px] font-medium tracking-widest text-zinc-400 uppercase">
+          <p className="mb-6 text-center text-[10px] font-medium tracking-widest text-zinc-400 dark:text-zinc-500 uppercase">
             Trusted by teams at
           </p>
           <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
             {BRANDS.map(brand => (
-              <span key={brand} className="text-xs font-bold tracking-[0.25em] text-zinc-300 uppercase">
+              <span key={brand} className="text-xs font-bold tracking-[0.25em] text-zinc-300 dark:text-zinc-600 uppercase">
                 {brand}
               </span>
             ))}
@@ -136,17 +139,19 @@ export default function LandingPage() {
         </div>
       </section>
 
+      </div>{/* end 95vh wrapper */}
+
       {/* Features */}
-      <section id="features" className="bg-white py-24 px-6">
+      <section id="features" className="bg-white dark:bg-zinc-900 py-24 px-6">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <p className="text-xs font-semibold uppercase tracking-widest text-violet-600 mb-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-violet-600 dark:text-violet-400 mb-3">
               Enterprise Grade Tools
             </p>
-            <h2 className="text-4xl font-bold text-zinc-900 tracking-tight">
+            <h2 className="text-4xl font-bold text-zinc-900 dark:text-white tracking-tight">
               Everything you need to audit,<br className="hidden sm:block" /> fix, and scale.
             </h2>
-            <p className="mt-4 text-base text-zinc-500 max-w-xl mx-auto">
+            <p className="mt-4 text-base text-zinc-500 dark:text-zinc-400 max-w-xl mx-auto">
               One platform to replace your disparate UX tools. We analyze the technical layer,
               the visual layer, and the cognitive layer simultaneously.
             </p>
@@ -156,13 +161,13 @@ export default function LandingPage() {
             {FEATURES.map(feature => (
               <div
                 key={feature.title}
-                className="group rounded-2xl border border-zinc-100 bg-zinc-50 p-6 transition-all hover:border-violet-200 hover:bg-violet-50/30 hover:shadow-md"
+                className="group rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-6 transition-all hover:border-violet-200 dark:hover:border-violet-700 hover:bg-violet-50/30 dark:hover:bg-violet-950/30 hover:shadow-md"
               >
-                <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-all">
+                <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-950 text-violet-600 dark:text-violet-400 group-hover:bg-violet-600 group-hover:text-white transition-all">
                   <feature.icon className="h-5 w-5" />
                 </div>
-                <h3 className="text-sm font-semibold text-zinc-900">{feature.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-500">{feature.description}</p>
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{feature.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -170,7 +175,7 @@ export default function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section className="bg-zinc-900 py-24 px-6">
+      <section className="bg-zinc-900 dark:bg-zinc-950 py-24 px-6">
         <div className="mx-auto max-w-4xl text-center">
           <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-3">
             How It Works
@@ -207,17 +212,17 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-200 bg-white py-8 px-6">
+      <footer className="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-8 px-6">
         <div className="mx-auto max-w-7xl flex flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="flex items-center gap-2">
             <div className="flex h-6 w-6 items-center justify-center rounded bg-violet-600 text-[10px] font-bold text-white">U</div>
-            <span className="text-xs font-semibold text-zinc-700">UX Auditor AI</span>
+            <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">UX Auditor AI</span>
           </div>
-          <p className="text-xs text-zinc-400">© 2025 UX Auditor AI. All rights reserved.</p>
-          <div className="flex gap-5 text-xs text-zinc-400">
-            <a href="#" className="hover:text-zinc-600">Privacy</a>
-            <a href="#" className="hover:text-zinc-600">Terms</a>
-            <a href="#" className="hover:text-zinc-600">Contact</a>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500">© 2025 UX Auditor AI. All rights reserved.</p>
+          <div className="flex gap-5 text-xs text-zinc-400 dark:text-zinc-500">
+            <a href="#" className="hover:text-zinc-600 dark:hover:text-zinc-300">Privacy</a>
+            <a href="#" className="hover:text-zinc-600 dark:hover:text-zinc-300">Terms</a>
+            <a href="#" className="hover:text-zinc-600 dark:hover:text-zinc-300">Contact</a>
           </div>
         </div>
       </footer>

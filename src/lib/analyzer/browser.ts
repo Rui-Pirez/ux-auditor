@@ -140,15 +140,25 @@ function inBrowserEval(): BrowserEvalResult {
     if (!isVisible(el)) continue;
     const rect = el.getBoundingClientRect();
     if (rect.top > window.innerHeight * 3) break;
-    if (rect.width < TOUCH_MIN || rect.height < TOUCH_MIN) {
+
+    // Include CSS padding in effective tap target size to avoid false positives
+    const s = window.getComputedStyle(el);
+    const effectiveW = rect.width
+      + parseFloat(s.paddingLeft || '0')
+      + parseFloat(s.paddingRight || '0');
+    const effectiveH = rect.height
+      + parseFloat(s.paddingTop || '0')
+      + parseFloat(s.paddingBottom || '0');
+
+    if (effectiveW < TOUCH_MIN || effectiveH < TOUCH_MIN) {
       const rawText = (el as HTMLElement).innerText?.trim()
         || (el as HTMLElement).getAttribute('aria-label')
         || (el as HTMLInputElement).placeholder
         || el.tagName;
       touchTargetIssues.push({
         text:   rawText.substring(0, 40),
-        width:  Math.round(rect.width),
-        height: Math.round(rect.height),
+        width:  Math.round(effectiveW),
+        height: Math.round(effectiveH),
         tag:    el.tagName.toLowerCase(),
       });
       if (touchTargetIssues.length >= 12) break;
@@ -174,14 +184,15 @@ function inBrowserEval(): BrowserEvalResult {
     : 0;
 
   // ── CTA above the fold ─────────────────────────────────────────────────────
-  const CTA_TEXT_RE = /sign\s*up|get\s+started|start|try\s+(free|now)|buy|subscribe|join|demo|free\s+trial|book|contact\s+us|apply|download/i;
-  const vh = window.innerHeight;
+  const CTA_TEXT_RE = /sign[\s-]*up|get[\s-]+started|start|try[\s-]*(free|now|it)?|buy|subscribe|join|demo|free[\s-]*trial|book|contact[\s-]*us|apply|download|learn[\s-]*more|explore|get[\s-]*access|request/i;
+  // Use 920px fold — many hero sections on 1280px-wide layouts extend slightly below 800px
+  const FOLD_LINE = 920;
   let ctaAboveFold = false;
   for (const el of Array.from(document.querySelectorAll<HTMLElement>('button, a[href], [role="button"]'))) {
-    const text = el.innerText?.trim() ?? '';
+    const text = (el.innerText?.trim() ?? '') || (el.getAttribute('aria-label') ?? '');
     if (!CTA_TEXT_RE.test(text)) continue;
     const rect = el.getBoundingClientRect();
-    if (rect.width > 0 && rect.bottom <= vh + 20 && rect.top >= -20) {
+    if (rect.width > 0 && rect.bottom <= FOLD_LINE && rect.top >= -20) {
       ctaAboveFold = true;
       break;
     }
@@ -225,27 +236,38 @@ const LCP_INJECTION = `
 
 // ── Main capture function ─────────────────────────────────────────────────────
 
+const REAL_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
+
 export async function capturePage(url: string): Promise<BrowserCapture> {
   const browser = await getBrowser();
-  const page: Page = await browser.newPage();
+  // Create a context with a realistic UA — bot-protection systems fingerprint the UA header
+  const context = await browser.newContext({
+    userAgent: REAL_UA,
+    viewport: { width: 1280, height: 800 },
+    locale: 'en-US',
+    timezoneId: 'America/New_York',
+  });
+  const page: Page = await context.newPage();
 
   const consoleErrors: string[] = [];
   const brokenResources: string[] = [];
   let resourceCount = 0;
 
+  // Only capture first-party console errors — 3rd-party scripts generate noise
   page.on('console', msg => {
-    if (msg.type() === 'error') {
-      const text = msg.text();
-      if (!text.includes('favicon') && !text.includes('ERR_') && consoleErrors.length < 10) {
-        consoleErrors.push(text.substring(0, 200));
-      }
+    if (msg.type() !== 'error') return;
+    const text = msg.text();
+    const loc  = msg.location().url ?? '';
+    const isThirdParty = /google|facebook|twitter|hotjar|segment|intercom|analytics|cdn\.|jquery|sentry|datadog/i.test(loc);
+    if (!isThirdParty && !text.includes('favicon') && !text.includes('ERR_') && consoleErrors.length < 10) {
+      consoleErrors.push(text.substring(0, 200));
     }
   });
 
   page.on('requestfailed', req => {
-    const url = req.url();
-    if (!/analytics|tracking|ads|pixel|beacon/i.test(url) && brokenResources.length < 10) {
-      brokenResources.push(`${req.method()} ${url.substring(0, 120)} – ${req.failure()?.errorText ?? 'failed'}`);
+    const u = req.url();
+    if (!/analytics|tracking|ads|pixel|beacon|fonts\.google|cdn\./i.test(u) && brokenResources.length < 10) {
+      brokenResources.push(`${req.method()} ${u.substring(0, 120)} – ${req.failure()?.errorText ?? 'failed'}`);
     }
   });
 
@@ -255,12 +277,13 @@ export async function capturePage(url: string): Promise<BrowserCapture> {
     // Inject LCP observer before navigation
     await page.addInitScript(LCP_INJECTION);
 
-    // Set realistic viewport
-    await page.setViewportSize({ width: 1280, height: 800 });
-
-    // Set a realistic user agent
+    // Headers that match a real browser fetch (UA and viewport already set on the context)
     await page.setExtraHTTPHeaders({
+      'Accept':          'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
       'Accept-Language': 'en-US,en;q=0.9',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Cache-Control':   'no-cache',
+      'Pragma':          'no-cache',
     });
 
     // Navigate, wait until network is quiet
@@ -274,6 +297,29 @@ export async function capturePage(url: string): Promise<BrowserCapture> {
       url = page.url(); // capture final URL after redirects
     } catch {
       // Page may still be usable even if networkidle timed out
+    }
+
+    // ── Bot-detection guard ─────────────────────────────────────────────────
+    // If the page is a Cloudflare/captcha interstitial, the HTML contains these
+    // patterns. Analysing that page produces entirely false results.
+    const rawHtml = await page.content();
+    const BOT_PATTERNS = [
+      'cf-browser-verification', 'cf-challenge', 'cf-spinner',
+      'checking your browser', 'please enable javascript and cookies',
+      'just a moment', 'ray id', 'ddos protection by',
+      'captcha', 'recaptcha', 'hcaptcha',
+      'access denied', 'enable javascript',
+      'your request has been blocked',
+    ];
+    const lowerRaw = rawHtml.toLowerCase();
+    const isBotPage = BOT_PATTERNS.some(p => lowerRaw.includes(p))
+      && !(rawHtml.match(/<h[1-6]/gi)?.length ?? 0 > 2); // real pages usually have several headings
+    if (isBotPage) {
+      await context.close();
+      throw new Error(
+        'Bot-protection detected (Cloudflare / captcha). The site served a challenge page instead of its real content. ' +
+        'Try a page that doesn\'t require browser verification, or audit a specific internal URL that bypasses the CDN.'
+      );
     }
 
     // Let JS settle
@@ -291,7 +337,7 @@ export async function capturePage(url: string): Promise<BrowserCapture> {
     const screenshotDataUrl = `data:image/jpeg;base64,${ssBuffer.toString('base64')}`;
 
     // ── Rendered HTML ───────────────────────────────────────────────────────
-    const renderedHtml = await page.content();
+    const renderedHtml = rawHtml; // already fetched above for the bot-detection guard
 
     // ── Accessibility tree ──────────────────────────────────────────────────
     let accessibilityTree: A11yNode | null = null;
@@ -312,7 +358,7 @@ export async function capturePage(url: string): Promise<BrowserCapture> {
     // ── LCP ────────────────────────────────────────────────────────────────
     const lcpMs = await page.evaluate(() => (window as any).__uxAuditorLCP ?? 0).catch(() => 0);
 
-    await page.close();
+    await context.close();
 
     return {
       screenshotDataUrl,
@@ -338,7 +384,7 @@ export async function capturePage(url: string): Promise<BrowserCapture> {
       viewportHeight: 800,
     };
   } catch (err) {
-    await page.close().catch(() => {});
+    await context.close().catch(() => {});
     throw err;
   }
 }

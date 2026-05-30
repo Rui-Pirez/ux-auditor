@@ -144,8 +144,12 @@ export function parseHTML(html: string, url: string): ParsedPage {
   const btnRe = /<button([^>]*)>([\s\S]*?)<\/button>/gi;
   let btn: RegExpExecArray | null;
   while ((btn = btnRe.exec(clean)) !== null) {
+    const attrs = btn[1];
     const t = cleanText(btn[2]);
-    if (t) buttons.push(t.substring(0, 60));
+    // Use visible text first; fall back to aria-label for icon-only buttons
+    const ariaLabelM = attrs.match(/aria-label=["']([^"']*)["']/i);
+    const label = t || (ariaLabelM ? ariaLabelM[1].trim() : '');
+    if (label) buttons.push(label.substring(0, 60));
   }
 
   // ── Forms ────────────────────────────────────────────────────────────────────
@@ -169,7 +173,7 @@ export function parseHTML(html: string, url: string): ParsedPage {
     let nl: RegExpExecArray | null;
     while ((nl = nlRe.exec(navM[1])) !== null) {
       const t = cleanText(nl[1]);
-      if (t && t.length < 60) navItems.push(t);
+      if (t && t.length > 0 && t.length < 120) navItems.push(t);
     }
   }
 
@@ -192,8 +196,9 @@ export function parseHTML(html: string, url: string): ParsedPage {
     /mailto:/i.test(clean) ||
     /tel:/i.test(clean) ||
     /\b[\w.+-]+@[\w-]+\.[a-z]{2,}\b/i.test(clean) ||
-    /contact(\s+us)?/i.test(clean) ||
-    /\+?[\d\s\-().]{10,}/i.test(clean);
+    /href=["'][^"']*\/(contact|get-in-touch|reach-us|support)[^"']*["']/i.test(clean) ||
+    // Proper phone number format (not zip codes or years): requires area-code pattern
+    /\+?1?\s*\(?\d{3}\)?[\s.\-]\d{3}[\s.\-]\d{4}/.test(clean);
 
   const hasCopyright = /©|&copy;|\bcopyright\b/i.test(html);
 
@@ -201,9 +206,17 @@ export function parseHTML(html: string, url: string): ParsedPage {
     /(twitter\.com|x\.com|facebook\.com|instagram\.com|linkedin\.com|youtube\.com|tiktok\.com|github\.com)/i.test(clean);
 
   const hasSocialProof =
-    /(testimonial|review|rating|trustpilot|g2\.com|capterra|starred)/i.test(clean) ||
-    /\d+(\.\d+)?\s*stars?/i.test(clean) ||
-    /(customers|users|companies)\s*(trust|use|love)/i.test(clean);
+    // Dedicated testimonial section
+    /class=["'][^"']*(testimonial|review-card|quote-block|customer-quote)[^"']*["']/i.test(clean) ||
+    // Aggregated ratings (e.g. "4.8/5", "★★★★★", "4.9 out of 5")
+    /[45]\s*[\./]\s*5\s*(stars?|rating)?/i.test(clean) ||
+    /★{3,}|⭐{3,}/i.test(clean) ||
+    // Third-party review platforms
+    /(trustpilot|g2\.com|capterra|getapp|producthunt|appsumo)/i.test(clean) ||
+    // Quoted testimonial pattern: a sentence in quotes followed by a name dash
+    /"[^"]{30,}"[\s\S]{0,50}[-–]\s*[A-Z][a-z]+/m.test(clean) ||
+    // Social proof stats
+    /\b([\d,]+\+?\s*(customers?|users?|companies|teams?|businesses?))\s*(trust|use|love|rely)/i.test(clean);
 
   const hasSkipLink =
     /skip[- ]to[- ](main|content)/i.test(clean) ||
@@ -218,7 +231,7 @@ export function parseHTML(html: string, url: string): ParsedPage {
   const tableCount = (clean.match(/<table[^>]*>/gi) || []).length;
 
   // ── Links ─────────────────────────────────────────────────────────────────────
-  const GENERIC = new Set(['click here', 'here', 'read more', 'learn more', 'more', 'link', 'this', 'details', 'info']);
+  const GENERIC = new Set(['click here', 'here', 'read more', 'learn more', 'more', 'link', 'this', 'details', 'info', 'see more', 'view details', 'view all', 'explore', 'find out more', 'get it', 'show more', 'continue reading']);
   const linkRe = /<a([^>]*)>([\s\S]*?)<\/a>/gi;
   const genericLinks: string[] = [];
   let externalLinksTotal = 0;

@@ -21,13 +21,13 @@ const ANALYSIS_STEPS = [
 
 function DashHeader() {
   return (
-    <header className="border-b border-zinc-200 bg-white px-6 py-3">
+    <header className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-3">
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-violet-600 text-[11px] font-bold text-white">U</div>
-          <span className="text-sm font-semibold text-zinc-900">UX Auditor AI</span>
+          <span className="text-sm font-semibold text-zinc-900 dark:text-white">UX Auditor AI</span>
         </Link>
-        <Link href="/" className="rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-zinc-700 transition-colors">
+        <Link href="/" className="rounded-full bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-zinc-700 dark:hover:bg-zinc-200 transition-colors">
           + New Audit
         </Link>
       </div>
@@ -37,29 +37,29 @@ function DashHeader() {
 
 function LoadingView({ url, step }: { url: string; step: number }) {
   return (
-    <div className="flex min-h-screen flex-col bg-[#f7f8fa]">
+    <div className="flex min-h-screen flex-col bg-[#f7f8fa] dark:bg-zinc-950">
       <DashHeader />
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-16">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-100">
-              <Loader2 className="h-7 w-7 animate-spin text-violet-600" />
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-950/50">
+              <Loader2 className="h-7 w-7 animate-spin text-violet-600 dark:text-violet-400" />
             </div>
-            <h1 className="text-2xl font-extrabold text-zinc-900">Analyzing your site</h1>
-            <p className="mt-1.5 text-sm text-zinc-400 truncate max-w-xs mx-auto">{url}</p>
+            <h1 className="text-2xl font-extrabold text-zinc-900 dark:text-white">Analyzing your site</h1>
+            <p className="mt-1.5 text-sm text-zinc-400 dark:text-zinc-500 truncate max-w-xs mx-auto">{url}</p>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-3.5">
+          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm space-y-3.5">
             {ANALYSIS_STEPS.map((s, i) => (
               <div key={s} className="flex items-center gap-3">
                 {i < step ? (
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-green-500" />
                 ) : i === step ? (
-                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-violet-500" />
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-violet-500 dark:text-violet-400" />
                 ) : (
-                  <Circle className="h-4 w-4 shrink-0 text-zinc-200" />
+                  <Circle className="h-4 w-4 shrink-0 text-zinc-200 dark:text-zinc-700" />
                 )}
-                <span className={`text-sm ${i < step ? 'text-zinc-300 line-through' : i === step ? 'font-semibold text-zinc-900' : 'text-zinc-300'}`}>
+                <span className={`text-sm ${i < step ? 'text-zinc-300 dark:text-zinc-600 line-through' : i === step ? 'font-semibold text-zinc-900 dark:text-white' : 'text-zinc-300 dark:text-zinc-600'}`}>
                   {s}
                 </span>
                 {i < step && <span className="ml-auto text-[10px] font-medium text-green-500">Done</span>}
@@ -67,13 +67,13 @@ function LoadingView({ url, step }: { url: string; step: number }) {
             ))}
           </div>
 
-          <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-zinc-200">
+          <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
             <div
               className="h-full rounded-full bg-violet-600 transition-all duration-500"
               style={{ width: `${Math.round((step / ANALYSIS_STEPS.length) * 100)}%` }}
             />
           </div>
-          <p className="mt-2 text-center text-xs text-zinc-400">
+          <p className="mt-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
             {Math.round((step / ANALYSIS_STEPS.length) * 100)}% complete · Running 30+ expert checks
           </p>
         </div>
@@ -85,19 +85,19 @@ function LoadingView({ url, step }: { url: string; step: number }) {
 function ErrorView({ message, url, onRetry }: { message: string; url: string; onRetry: () => void }) {
   const router = useRouter();
   return (
-    <div className="flex min-h-screen flex-col bg-[#f7f8fa]">
+    <div className="flex min-h-screen flex-col bg-[#f7f8fa] dark:bg-zinc-950">
       <DashHeader />
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-16">
         <div className="w-full max-w-md text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-950/40">
             <AlertCircle className="h-7 w-7 text-red-500" />
           </div>
-          <h1 className="text-2xl font-extrabold text-zinc-900">Could not analyze this URL</h1>
-          <p className="mt-2 text-sm text-zinc-500">{message}</p>
-          <p className="mt-1 text-xs text-zinc-400 break-all">{url}</p>
+          <h1 className="text-2xl font-extrabold text-zinc-900 dark:text-white">Could not analyze this URL</h1>
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">{message}</p>
+          <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500 break-all">{url}</p>
           <div className="mt-6 space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Common reasons</p>
-            <ul className="text-left rounded-xl border border-zinc-100 bg-white p-5 text-xs text-zinc-500 space-y-2.5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">Common reasons</p>
+            <ul className="text-left rounded-xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 text-xs text-zinc-500 dark:text-zinc-400 space-y-2.5 shadow-sm">
               <li>• The site blocks automated requests (Cloudflare, bot protection)</li>
               <li>• The URL requires authentication to access</li>
               <li>• The server is temporarily unavailable</li>
@@ -113,7 +113,7 @@ function ErrorView({ message, url, onRetry }: { message: string; url: string; on
             </button>
             <button
               onClick={() => router.push('/')}
-              className="rounded-full border border-zinc-200 bg-white px-6 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
+              className="rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-6 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
             >
               Different URL
             </button>

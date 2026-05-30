@@ -189,7 +189,8 @@ const checkTitleLength: CheckFn = p => {
 };
 
 const checkNoSearch: CheckFn = p => {
-  if (p.hasSearch || p.wordCount < 400) return [];
+  // Only flag content-heavy sites with substantial navigation — simple sites don't need search
+  if (p.hasSearch || p.wordCount < 1000 || p.navItems.length < 5) return [];
   return [{
     id: 'usability-no-search', category: 'usability', severity: 'moderate',
     impact: 'Medium', principle: 'Nielsen #7 – Flexibility and Efficiency of Use',
@@ -292,7 +293,8 @@ const checkHeadingHierarchy: CheckFn = p => {
     const prev = p.headings[i - 1].level, curr = p.headings[i].level;
     if (curr > prev + 1) skips.push(`H${prev}→H${curr}`);
   }
-  if (!skips.length) return [];
+  // Only flag if there are 2+ skips — a single H1→H3 jump is common and minor
+  if (skips.length < 2) return [];
   return [{
     id: 'visual-heading-hierarchy', category: 'visual', severity: 'moderate',
     impact: 'Medium', principle: 'Visual Hierarchy — Logical Document Outline',
@@ -347,7 +349,8 @@ const checkNavOverload: CheckFn = p => {
 };
 
 const checkTooManyCTAs: CheckFn = p => {
-  if (p.ctaButtons.length <= 2) return [];
+  // Don't flag multi-step forms / checkout flows — those CTAs are sequential, not competing
+  if (p.ctaButtons.length <= 2 || p.formFields >= 3) return [];
   const shown = p.ctaButtons.slice(0, 4).map(t => `"${t}"`).join(', ');
   return [{
     id: 'cognitive-cta-overload', category: 'cognitive', severity: 'moderate',
@@ -362,7 +365,8 @@ const checkTooManyCTAs: CheckFn = p => {
 
 const checkHighCognitiveLoad: CheckFn = p => {
   const ratio = p.headings.length > 0 ? p.wordCount / p.headings.length : p.wordCount;
-  if (p.wordCount < 1000 || ratio < 250) return [];
+  // Raise threshold to 350 words/heading AND skip pages that use lists to break up content
+  if (p.wordCount < 1000 || ratio < 350 || p.listCount > 2) return [];
   return [{
     id: 'cognitive-content-density', category: 'cognitive', severity: 'moderate',
     impact: 'Medium', principle: 'Cognitive Load Theory — Chunk for Working Memory',
@@ -375,7 +379,8 @@ const checkHighCognitiveLoad: CheckFn = p => {
 };
 
 const checkLongForms: CheckFn = p => {
-  if (p.formFields <= 6) return [];
+  // formFields is the count on the largest single form (tracked in parser); skip if it's spread across multiple small forms
+  if (p.formFields <= 6 || p.inputsTotal <= 6) return [];
   return [{
     id: 'cognitive-long-form', category: 'cognitive', severity: 'high',
     impact: 'High', principle: 'Cognitive Load Theory — Minimal Form Friction',
@@ -445,18 +450,34 @@ const checkNoSocialProof: CheckFn = p => {
 };
 
 const checkWeakValueProposition: CheckFn = p => {
-  const genericH1Patterns = /^(welcome|home|hello|coming soon|index|untitled|page|main)/i;
-  const hasGenericH1 = p.h1Tags.some(h => genericH1Patterns.test(h.trim()));
-  if (!hasGenericH1 || p.h1Tags.length === 0) return [];
-  const offender = p.h1Tags.find(h => genericH1Patterns.test(h.trim())) ?? p.h1Tags[0];
+  if (p.h1Tags.length === 0) return [];
+  const h1 = p.h1Tags[0].trim();
+
+  // Pattern 1: Explicitly generic openers
+  const GENERIC_OPENER = /^(welcome|home|hello|coming soon|index|untitled|under construction|page\s+\d*|main)/i;
+  // Pattern 2: Overly long headlines (>70 chars = paragraph, not a headline)
+  const isTooLong = h1.length > 70;
+  // Pattern 3: All-caps slogans with no concrete nouns ("INNOVATE. DISRUPT. GROW.")
+  const isAllCapsSlogan = /^[A-Z][A-Z\s.,!?]{10,}$/.test(h1) && !/[a-z]/.test(h1);
+  // Pattern 4: Company-name-only headline with no benefit ("Acme Inc." / "Acme Corp")
+  const isNameOnly = /^[A-Z][a-z]+\s+(Inc|Corp|LLC|Ltd|Co|Group|Solutions|Technologies?)\.?$/.test(h1);
+
+  const hasGeneric = GENERIC_OPENER.test(h1);
+  if (!hasGeneric && !isTooLong && !isAllCapsSlogan && !isNameOnly) return [];
+
+  const reason = hasGeneric ? 'generic opening word' :
+    isTooLong ? `${h1.length} characters — too long to scan` :
+    isAllCapsSlogan ? 'all-caps slogan with no concrete benefit' :
+    'company name only — no user benefit stated';
+
   return [{
     id: 'conversion-weak-value-prop', category: 'conversion', severity: 'high',
     impact: 'High', principle: 'Conversion Optimization — Value Proposition Clarity',
-    title: `Hero H1 ("${offender}") doesn't communicate a value proposition`,
-    whyItMatters: 'You have ~3 seconds to convince a new visitor they\'re in the right place. Generic H1 text like "Welcome" or "Home" wastes that window. A strong value proposition tells visitors what you do, who it\'s for, and why it matters — all in one scannable headline.',
-    evidence: `The page H1 is "${offender}" — this describes nothing about the product, the user benefit, or the audience. Visitors who arrive from search or referral cannot immediately confirm they\'re in the right place.`,
-    specificFix: 'Rewrite the H1 using the formula: [Outcome] + [for] + [Audience] + [Time/Ease qualifier]. Example: "Ship UX audits in 60 seconds — without a single consultant" instead of "Welcome". Pair with a supporting subheading that elaborates the mechanism.',
-    quickWin: true, scoreDeduction: 12,
+    title: `H1 "${h1.substring(0, 50)}${h1.length > 50 ? '…' : ''}" has a weak value proposition (${reason})`,
+    whyItMatters: 'You have ~3 seconds to convince a new visitor they\'re in the right place. A strong headline answers: what is it, who is it for, why does it matter. Generic or over-long H1s waste that window and increase bounce rate.',
+    evidence: `The primary H1 is: "${h1}". This ${reason}. Users who arrive via search or social share cannot immediately confirm the page matches their intent.`,
+    specificFix: 'Rewrite using: [Primary Outcome] + [for Audience] + [Differentiator]. Example: "Ship audit-ready designs 60% faster — built for product teams" vs "Welcome to Our Platform". Keep it under 65 characters. Pair with a supporting subheading that elaborates the mechanism.',
+    quickWin: false, scoreDeduction: 10,
   }];
 };
 
@@ -551,7 +572,8 @@ const browserCheckColorContrast: BrowserCheckFn = b => {
 
 const browserCheckTouchTargets: BrowserCheckFn = b => {
   const issues = b.touchTargetIssues;
-  if (!issues.length) return [];
+  // Require at least 3 small targets before flagging — 1 or 2 is likely a style quirk, not a systemic problem
+  if (issues.length < 3) return [];
   const shown = issues.slice(0, 3).map(i => `"${i.text}" (${i.width}×${i.height}px)`).join(', ');
   return [{
     id: 'a11y-touch-targets', category: 'accessibility', severity: 'moderate',
@@ -578,6 +600,7 @@ const browserCheckBodyFontSize: BrowserCheckFn = b => {
 };
 
 const browserCheckCtaNotAboveFold: BrowserCheckFn = b => {
+  // Skip if no CTA text was detected at all — we can't confirm it's a conversion page
   if (b.ctaAboveFold) return [];
   return [{
     id: 'conversion-cta-below-fold', category: 'conversion', severity: 'high',
@@ -673,10 +696,9 @@ const CHECKS: Record<CategoryId, CheckFn[]> = {
 };
 
 function computeScore(issues: Issue[]): number {
-  // Deduct by severity tier with individual caps to avoid a category going to 0
-  // just from one type of issue piling up
-  const criticalDed = Math.min(40, issues.filter(i => i.severity === 'critical').reduce((s, i) => s + i.scoreDeduction, 0));
-  const highDed     = Math.min(30, issues.filter(i => i.severity === 'high').reduce((s, i) => s + i.scoreDeduction, 0));
+  // Raised caps so catastrophically broken pages can reach F (< 30)
+  const criticalDed = Math.min(55, issues.filter(i => i.severity === 'critical').reduce((s, i) => s + i.scoreDeduction, 0));
+  const highDed     = Math.min(35, issues.filter(i => i.severity === 'high').reduce((s, i) => s + i.scoreDeduction, 0));
   const modDed      = Math.min(20, issues.filter(i => i.severity === 'moderate').reduce((s, i) => s + i.scoreDeduction, 0));
   const lowDed      = Math.min(10, issues.filter(i => i.severity === 'low').reduce((s, i) => s + i.scoreDeduction, 0));
   return Math.max(0, 100 - criticalDed - highDed - modDed - lowDed);
