@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
-import Link from 'next/link';
 import type { AuditResult, Issue, CategoryId } from '@/lib/analyzer';
 import { IssueCard } from './IssueCard';
+import { Navbar } from '@/components/shared/Navbar';
 import {
   Download, RefreshCw, ToggleLeft, ToggleRight, ChevronRight,
   ExternalLink, AlertCircle, AlertTriangle, Info, Zap,
@@ -889,29 +889,42 @@ export function AuditDashboard({ result, onReanalyze }: AuditDashboardProps) {
 
   return (
     <div className="min-h-screen bg-[#f7f8fa] dark:bg-zinc-950">
-      {/* ── App header ── */}
-      <header className="sticky top-0 z-40 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-3">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-violet-600 text-[11px] font-bold text-white">U</div>
-            <span className="text-sm font-semibold text-zinc-900 dark:text-white">UX Auditor AI</span>
-          </Link>
-          <div className="flex items-center gap-2 no-print">
-            <span className="hidden rounded-full border border-zinc-200 dark:border-zinc-700 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 sm:block">Dashboard Beta v1.2</span>
-            <button onClick={() => setExpertMode(v => !v)} className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${expertMode ? 'border-violet-200 bg-violet-50 text-violet-700' : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700'}`}>
+      {/* ── Main nav (logo + avatar + theme toggle) ── */}
+      <Navbar showBack />
+
+      {/* ── Audit action bar ── */}
+      <div className="sticky top-14 z-30 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm px-6 py-2 no-print">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+          <span className="hidden rounded-full border border-zinc-200 dark:border-zinc-700 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 sm:block">
+            Beta v1.2
+          </span>
+          <div className="flex items-center gap-2 ml-auto">
+            <button
+              onClick={() => setExpertMode(v => !v)}
+              className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                expertMode
+                  ? 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950/50 dark:text-violet-400'
+                  : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700'
+              }`}
+            >
               {expertMode ? <ToggleRight className="h-3.5 w-3.5" /> : <ToggleLeft className="h-3.5 w-3.5" />}
               {expertMode ? 'Expert Mode' : 'Standard Mode'}
             </button>
-            <button onClick={handleDownload} className="flex items-center gap-1.5 rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/50 px-3 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-950 transition-colors">
+            <button
+              onClick={handleDownload}
+              className="flex items-center gap-1.5 rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/50 px-3 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-950 transition-colors"
+            >
               <Download className="h-3.5 w-3.5" /> PDF Export
             </button>
-            <button onClick={onReanalyze} className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 transition-colors">
+            <button
+              onClick={onReanalyze}
+              className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 transition-colors"
+            >
               <RefreshCw className="h-3.5 w-3.5" /> Re-analyze
             </button>
-            <Link href="/" className="rounded-full bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-zinc-700 dark:hover:bg-zinc-200 transition-colors">+ New Audit</Link>
           </div>
         </div>
-      </header>
+      </div>
 
       <div className="mx-auto max-w-7xl px-6 py-8 space-y-6">
         {/* ── Page title ── */}
