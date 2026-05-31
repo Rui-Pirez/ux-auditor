@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Plus, BarChart3, TrendingUp, TrendingDown, Minus as Flat,
-  Globe, RefreshCw, ExternalLink, Zap, Clock, Award,
+  Globe, RefreshCw, ExternalLink, Zap, Award,
   ChevronRight, Search, Trash2, Activity,
 } from 'lucide-react';
 import { Navbar } from '@/components/shared/Navbar';
@@ -124,10 +124,10 @@ export default function DashboardPage() {
   }
 
   // ── Derived stats ─────────────────────────────────────────────────────────
-  const total     = history.length;
-  const avgScore  = total > 0 ? Math.round(history.reduce((s, h) => s + h.score, 0) / total) : 0;
-  const bestScore = total > 0 ? Math.max(...history.map(h => h.score)) : 0;
-  const lastEntry = history[0] ?? null;
+  const total       = history.length;
+  const avgScore    = total > 0 ? Math.round(history.reduce((s, h) => s + h.score, 0) / total) : 0;
+  const bestScore   = total > 0 ? Math.max(...history.map(h => h.score)) : 0;
+  const uniqueSites = new Set(history.map(h => h.domain)).size;
 
   const recentTrend = (() => {
     if (history.length < 2) return null;
@@ -209,10 +209,12 @@ export default function DashboardPage() {
               iconBg:  'bg-amber-50 dark:bg-amber-950/50',
             },
             {
-              label:   'Last Audited',
-              value:   lastEntry ? timeAgo(lastEntry.analyzedAt) : '—',
-              sub:     lastEntry ? lastEntry.domain : 'Nothing yet',
-              icon:    Clock,
+              label:   'Sites Tracked',
+              value:   uniqueSites || '—',
+              sub:     uniqueSites === 0 ? 'No sites yet'
+                     : uniqueSites === 1 ? '1 unique domain'
+                     : `${uniqueSites} unique domains`,
+              icon:    Globe,
               color:   'text-blue-500 dark:text-blue-400',
               iconBg:  'bg-blue-50 dark:bg-blue-950/50',
             },
