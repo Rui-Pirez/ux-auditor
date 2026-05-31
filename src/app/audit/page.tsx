@@ -170,7 +170,7 @@ export default function AuditPage({
       await new Promise(r => setTimeout(r, 400));
 
       const history = JSON.parse(localStorage.getItem('ux-audit-history') || '[]');
-      const entry = { url: data.url, domain: data.domain, score: data.overallScore, grade: data.grade, analyzedAt: data.analyzedAt };
+      const entry = { url: data.url, domain: data.domain, score: data.overallScore, grade: data.grade, analyzedAt: data.analyzedAt, issueCount: data.allIssues?.length ?? 0 };
       localStorage.setItem('ux-audit-history', JSON.stringify([entry, ...history.filter((h: typeof entry) => h.url !== data.url)].slice(0, 20)));
 
       setResult(data);

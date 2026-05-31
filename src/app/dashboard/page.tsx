@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Plus, BarChart3, TrendingUp, TrendingDown, Minus as Flat,
-  Globe, RefreshCw, ExternalLink, Zap, Award,
+  Globe, RefreshCw, ExternalLink, Zap, Award, AlertTriangle,
   ChevronRight, Search, Trash2, Activity,
 } from 'lucide-react';
 import { Navbar } from '@/components/shared/Navbar';
@@ -19,6 +19,7 @@ interface HistoryEntry {
   score: number;
   grade: string;
   analyzedAt: string;
+  issueCount?: number;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -127,7 +128,7 @@ export default function DashboardPage() {
   const total       = history.length;
   const avgScore    = total > 0 ? Math.round(history.reduce((s, h) => s + h.score, 0) / total) : 0;
   const bestScore   = total > 0 ? Math.max(...history.map(h => h.score)) : 0;
-  const uniqueSites = new Set(history.map(h => h.domain)).size;
+  const totalIssues = history.reduce((s, h) => s + (h.issueCount ?? 0), 0);
 
   const recentTrend = (() => {
     if (history.length < 2) return null;
@@ -209,14 +210,13 @@ export default function DashboardPage() {
               iconBg:  'bg-amber-50 dark:bg-amber-950/50',
             },
             {
-              label:   'Sites Tracked',
-              value:   uniqueSites || '—',
-              sub:     uniqueSites === 0 ? 'No sites yet'
-                     : uniqueSites === 1 ? '1 unique domain'
-                     : `${uniqueSites} unique domains`,
-              icon:    Globe,
-              color:   'text-blue-500 dark:text-blue-400',
-              iconBg:  'bg-blue-50 dark:bg-blue-950/50',
+              label:   'Total Issues Found',
+              value:   total > 0 ? totalIssues : '—',
+              sub:     total === 0 ? 'No audits yet'
+                     : `~${Math.round(totalIssues / total)} per audit`,
+              icon:    AlertTriangle,
+              color:   totalIssues === 0 ? 'text-zinc-400' : 'text-rose-500 dark:text-rose-400',
+              iconBg:  'bg-rose-50 dark:bg-rose-950/50',
             },
           ].map(card => (
             <div key={card.label} className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
