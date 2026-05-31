@@ -83,7 +83,7 @@ function UserMenu({ name, email }: { name: string; email: string }) {
           {/* Menu items */}
           <div className="py-1.5">
             <Link
-              href="/"
+              href="/dashboard"
               onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
             >
